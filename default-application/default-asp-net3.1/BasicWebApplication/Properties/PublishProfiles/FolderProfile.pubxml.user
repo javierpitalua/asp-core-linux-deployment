@@ -3,4 +3,8 @@
 https://go.microsoft.com/fwlink/?LinkID=208121. 
 -->
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_PublishTargetUrl>D:\Projects\asp-core-linux-deployment\default-application\default-asp-net3.1\BasicWebApplication\bin\Release\netcoreapp3.1\publish\</_PublishTargetUrl>
+    <History>True|2021-05-07T00:57:21.5612774Z;True|2021-05-06T19:57:03.6117339-05:00;</History>
+  </PropertyGroup>
 </Project>
