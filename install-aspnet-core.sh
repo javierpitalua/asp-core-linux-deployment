@@ -35,7 +35,7 @@ echo Adding .Net Core 3.1 Runtime...
 sudo apt-get install -y aspnetcore-runtime-3.1
 
 echo Downloading default .net core application...
-wget -O deployment-package.zip https://github.com/javierpitalua/asp-core-linux-deployment/raw/main/dist/deployment-package.zip
+sudo wget -O deployment-package.zip https://github.com/javierpitalua/asp-core-linux-deployment/raw/main/dist/deployment-package.zip
 echo Download complete.
 
 echo Unzipping application file...
@@ -50,7 +50,7 @@ Description=.net core web application
 
 [Service]
 WorkingDirectory=/var/www/[application-name]
-ExecStart=/usr/bin/dotnet /var/www/[$application-name]/[application-dll]
+ExecStart=/usr/bin/dotnet /var/www/[application-name]/[application-dll]
 Restart=always
 # Restart service after 10 seconds if the dotnet service crashes:
 RestartSec=10
@@ -92,10 +92,10 @@ server {
 EOF
 
 echo Updating domain name on Nginx...
-sed "s/[domain-name]/$CICD_APPLICATION_DOMAIN/g" /etc/nginx/sites-available/default
+sudo sed "s/[domain-name]/$CICD_APPLICATION_DOMAIN/g" /etc/nginx/sites-available/default
 
 echo Nginx configuration file:
-cat /etc/nginx/sites-available/default
+sudo cat /etc/nginx/sites-available/default
 
 echo Enabling application service...
 sudo systemctl enable "$CICD_APPLICATION_NAME.service"
