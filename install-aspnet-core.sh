@@ -69,5 +69,6 @@ sudo systemctl status "$CICD_APPLICATION_NAME.service"
 
 echo Starting nginx...
 sudo service nginx start
+sudo service nginx -s reload
 
 echo Script completed.
