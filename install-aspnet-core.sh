@@ -6,8 +6,9 @@
 # Use the following variables to control your install:
 CICD_DEPLOYMENT_USER='devops'
 CICD_DEPLOYMENT_PWD='<YOUR_PASSWORD>'
-CICD_APPLICATION_FOLDER='netcoreapp'
-CICD_APPLICATION_DOMAIN='netcoreapp'
+CICD_APPLICATION_NAME='netcoreapp'
+CICD_APPLICATION_DLL='BasicWebApplication.dll'
+CICD_APPLICATION_DOMAIN='<YOUR_DOMAIN_OR_IP>'
 
 echo Creating a CICD user...
 sudo adduser --disabled-password --gecos "" "$CICD_DEPLOYMENT_USER"
@@ -38,16 +39,45 @@ wget -O deployment-package.zip https://github.com/javierpitalua/asp-core-linux-d
 echo Download complete.
 
 echo Unzipping application file...
-mkdir -p "/home/$CICD_DEPLOYMENT_USER/$CICD_APPLICATION_FOLDER"
-unzip deployment-package.zip -d "/home/$CICD_DEPLOYMENT_USER/$CICD_APPLICATION_FOLDER"
+sudo mkdir -p "/var/www/$CICD_APPLICATION_NAME"
+sudo unzip deployment-package.zip -d "/var/www/$CICD_APPLICATION_NAME"
+
+echo Running app as a service...
+
+sudo cat > "/etc/systemd/system/$CICD_APPLICATION_NAME.service" << EOF
+[Unit]
+Description=.net core web application
+
+[Service]
+WorkingDirectory=/var/www/[application-name]
+ExecStart=/usr/bin/dotnet /var/www/[$application-name]/[application-dll]
+Restart=always
+# Restart service after 10 seconds if the dotnet service crashes:
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=[application-name]
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+echo Updating service file
+sudo sed "s/[application-name]/$CICD_APPLICATION_NAME/g" "/etc/systemd/system/$CICD_APPLICATION_NAME.service"
+sudo sed "s/[application-dll]/$CICD_APPLICATION_DLL/g" "/etc/systemd/system/$CICD_APPLICATION_NAME.service"
+
+echo systemd configuration:
+sudo cat "/etc/systemd/system/$CICD_APPLICATION_NAME.service"
 
 echo Installing nginx...
 sudo apt-get install nginx
 
-cat > /etc/nginx/sites-available/default << EOF
+sudo cat > /etc/nginx/sites-available/default << EOF
 server {
     listen        80;
-    server_name  [$domain-name];
+    server_name   [domain-name];
     location / {
         proxy_pass         http://127.0.0.1:5000;
         proxy_http_version 1.1;
@@ -62,7 +92,17 @@ server {
 EOF
 
 echo Updating domain name on Nginx...
-sed "s/[$domain-name]/$CICD_APPLICATION_DOMAIN/g" /etc/nginx/sites-available/default
+sed "s/[domain-name]/$CICD_APPLICATION_DOMAIN/g" /etc/nginx/sites-available/default
 
-echo Updating domain name on Nginx...
+echo Nginx configuration file:
+cat /etc/nginx/sites-available/default
+
+echo Enabling application service...
+sudo systemctl enable "$CICD_APPLICATION_NAME.service"
+sudo systemctl start "$CICD_APPLICATION_NAME.service"
+sudo systemctl status "$CICD_APPLICATION_NAME.service"
+
+echo Starting nginx...
 sudo service nginx start
+
+echo Script completed.
